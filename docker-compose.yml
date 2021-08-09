@@ -1,0 +1,43 @@
+version: '3'
+
+services: 
+  influxdb:
+    container_name: influxdb
+    image: influxdb:2.0
+    ports:
+        - "8086:8086"
+    environment:
+      - INFLUXDB_ADMIN_USER=admin
+      - INFLUXDB_ADMIN_PASSWORD=my-telegraf
+      - INFLUXDB_ORGANIZATION=ivanlab.org
+      - INFLUXDB_BUCKET=telegraf
+    volumes:
+      - ./influxdb/data:/var/lib/influxdb2
+      - ./influxdb/config:/etc/influxdb2  
+    restart: always
+
+  telegraf: 
+    container_name: telegraf
+    image: telegraf:latest
+    restart: always
+    links:
+      - influxdb
+    depends_on:
+      - "influxdb"
+    volumes:
+    - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro   
+
+  grafana: 
+    container_name: grafana
+    image: grafana/grafana
+    hostname: grafana
+    links:
+      - influxdb
+    ports:
+        - "3000:3000"
+    env_file:
+      - 'env.grafana'
+    volumes:
+      - ./grafana/data/:/var/lib/grafana
+      - ./grafana/etc:/etc/grafana
+
